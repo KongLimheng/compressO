@@ -61,14 +61,16 @@ export type Video = {
 
 export type App = {
   batchId?: string
-  totalSelectedFilesCount: number
   videos: Video[]
+  isLoadingFiles: boolean
+  totalSelectedFilesCount: number
   currentVideoIndex: number
   totalDurationMs: number
   isCompressing: boolean
   totalProgress: number
   isProcessCompleted: boolean
+  isBatchCompressionCancelled: boolean
   isSaving: boolean
   isSaved: boolean
-  isLoadingFiles: boolean
+  savedPath?: string
 }

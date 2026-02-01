@@ -14,19 +14,21 @@ export const videoConfigInitialState: VideoConfig = {
 
 const appInitialState: App = {
   videos: [],
+  isLoadingFiles: false,
   totalSelectedFilesCount: 0,
   currentVideoIndex: 0,
   totalDurationMs: 0,
   isCompressing: false,
   totalProgress: 0,
   isProcessCompleted: false,
+  isBatchCompressionCancelled: false,
   isSaving: false,
   isSaved: false,
-  isLoadingFiles: false,
 }
 
 const snapshotMoment = {
   beforeCompressionStarted: 'beforeCompressionStarted',
+  batchCompressionStep: 'batchCompressionStep',
 } as const
 
 type SnapshotMoment = keyof typeof snapshotMoment
@@ -41,6 +43,7 @@ type AppProxy = {
 
 const snapshotsInitialState = {
   [snapshotMoment.beforeCompressionStarted]: cloneDeep(appInitialState),
+  [snapshotMoment.batchCompressionStep]: cloneDeep(appInitialState),
 }
 
 export const appProxy: AppProxy = proxy({

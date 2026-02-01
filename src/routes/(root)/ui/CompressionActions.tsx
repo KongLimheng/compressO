@@ -11,7 +11,7 @@ import { appProxy } from '../-state'
 
 function CompressionActions() {
   const {
-    state: { videos, isProcessCompleted, isLoadingFiles },
+    state: { videos, isProcessCompleted, isLoadingFiles, isSaving },
     resetProxy,
   } = useSnapshot(appProxy)
 
@@ -64,6 +64,7 @@ function CompressionActions() {
               onMouseEnter={() => setIsRedoHovered(true)}
               onMouseLeave={() => setIsRedoHovered(false)}
               isIconOnly={!isRedoHovered}
+              isDisabled={isSaving}
             >
               <Icon name="redo" size={22} />{' '}
               <motion.span
@@ -90,6 +91,7 @@ function CompressionActions() {
             className="gap-1 w-fit min-w-0"
             onMouseEnter={() => setIsCloseHovered(true)}
             onMouseLeave={() => setIsCloseHovered(false)}
+            isDisabled={isSaving}
           >
             <Icon name="cross" size={22} />
             <motion.span
@@ -108,9 +110,9 @@ function CompressionActions() {
         </AnimatePresence>
       </div>
       <AlertDialog
-        title="Video not saved!"
+        title={`Video${videos.length > 1 ? 's' : ''} not saved`}
         discloser={alertDiscloser}
-        description="Your compressed video is not yet saved. Are you sure you want to discard it?"
+        description={`Your compressed video${videos.length > 1 ? 's are' : ' is'} not yet saved. Are you sure you want to discard it?`}
         renderFooter={({ closeModal }) => (
           <>
             <AlertDialogButton onPress={closeModal}>Go Back</AlertDialogButton>

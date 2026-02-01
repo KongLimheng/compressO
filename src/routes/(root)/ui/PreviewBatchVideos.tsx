@@ -56,9 +56,12 @@ function PreviewBatchVideos() {
       totalVideos,
       totalSize,
       compressedCount,
+      compressedSize,
       sizeSaved,
       percentageSaved,
       totalProgress,
+      isPositiveCompression:
+        (compressedSize ?? Number.MAX_SAFE_INTEGER) < (totalSize ?? 0),
     }
   }, [videos])
 
@@ -104,7 +107,6 @@ function PreviewBatchVideos() {
                   variants={zoomInStaggerAnimation.item}
                   className={cn([
                     'relative rounded-xl border-zinc-300 dark:border-zinc-800 overflow-hidden',
-                    video.isCompressing ? 'opacity-50' : '',
                   ])}
                 >
                   <Card
@@ -149,7 +151,7 @@ function PreviewBatchVideos() {
                             size="lg"
                             showValueLabel
                             className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2"
-                            value={video.compressionProgress ?? 20}
+                            value={video.compressionProgress ?? 0}
                             strokeWidth={3}
                             classNames={{
                               svg: 'w-20 h-20 drop-shadow-md',
@@ -163,12 +165,7 @@ function PreviewBatchVideos() {
                       ) : null}
                     </div>
                     <section className="px-3 py-2">
-                      <p
-                        className={cn([
-                          'font-medium text-sm truncate block',
-                          isCompressing ? 'text-gray-500' : '',
-                        ])}
-                      >
+                      <p className={cn(['font-medium text-sm truncate block'])}>
                         {video.fileName ?? ''}
                       </p>
                       <section
@@ -320,11 +317,13 @@ function PreviewBatchVideos() {
                 <Divider orientation="vertical" className="h-8" />
                 <div>
                   <p className="text-[12px] italic text-gray-600 dark:text-gray-400">
-                    Size Saved
+                    Saved
                   </p>
                   <p className="font-black text-lg text-green-600 dark:text-green-400">
-                    {formatBytes(compressionStats.sizeSaved ?? 0) || '-'} (
-                    {(compressionStats.percentageSaved ?? 0).toFixed(1)}%)
+                    {formatBytes(compressionStats.sizeSaved ?? 0) || '...'}
+                    {compressionStats.percentageSaved
+                      ? `(${(compressionStats.percentageSaved ?? 0).toFixed(0)}%)`
+                      : null}
                   </p>
                 </div>
               </div>
@@ -350,7 +349,11 @@ function PreviewBatchVideos() {
                     isLoadingFiles ? 'animate-pulse' : '',
                   )}
                 >
-                  {compressionStats.totalVideos}
+                  {compressionStats.totalVideos}{' '}
+                  {/* Show this when batch compression was cancelled when it was in progress */}
+                  <span className="text-xs italic text-warning-400">
+                    (25 cancelled)
+                  </span>
                 </p>
               </div>
               <Divider orientation="vertical" className="h-8" />
@@ -372,11 +375,34 @@ function PreviewBatchVideos() {
                   <Divider orientation="vertical" className="h-8" />
                   <div>
                     <p className="italic text-gray-600 dark:text-gray-400">
-                      Size Saved
+                      Output Size
                     </p>
-                    <p className="font-black text-lg text-green-600 dark:text-green-400">
+                    <p
+                      className={cn(
+                        'font-black text-lg',
+                        compressionStats.isPositiveCompression
+                          ? 'text-green-600 dark:text-green-400'
+                          : '',
+                      )}
+                    >
+                      {formatBytes(compressionStats.compressedSize ?? 0) || '-'}
+                    </p>
+                  </div>
+                  <Divider orientation="vertical" className="h-8" />
+                  <div>
+                    <p className="italic text-gray-600 dark:text-gray-400">
+                      Saved
+                    </p>
+                    <p
+                      className={cn(
+                        'font-black text-lg',
+                        compressionStats.isPositiveCompression
+                          ? 'text-green-600 dark:text-green-400'
+                          : '',
+                      )}
+                    >
                       {formatBytes(compressionStats.sizeSaved ?? 0) || '-'} (
-                      {(compressionStats.percentageSaved ?? 0).toFixed(1)}%)
+                      {(compressionStats.percentageSaved ?? 0).toFixed(2)}%)
                     </p>
                   </div>
                 </>

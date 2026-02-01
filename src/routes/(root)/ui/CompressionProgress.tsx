@@ -37,6 +37,7 @@ function CompressionProgress() {
                 )
                 if (targetVideoIndex !== -1) {
                   appProxy.state.currentVideoIndex = targetVideoIndex
+                  appProxy.state.videos[targetVideoIndex].isCompressing = true
                   const videoDurationMilliseconds =
                     videos[targetVideoIndex].videoDurationMilliseconds
                   if (!(videoDurationMilliseconds == null)) {
@@ -77,6 +78,8 @@ function CompressionProgress() {
                   appProxy.state.videos[targetVideoIndex].isProcessCompleted =
                     true
                   appProxy.state.videos[targetVideoIndex].isCompressing = false
+                  appProxy.state.videos[targetVideoIndex].compressionProgress =
+                    100
                   appProxy.state.videos[targetVideoIndex].compressedVideo = {
                     isSuccessful: true,
                     fileName: fileMetadata?.fileName,
@@ -90,6 +93,9 @@ function CompressionProgress() {
                     extension: fileMetadata?.extension,
                     size: formatBytes(fileMetadata?.size ?? 0),
                     sizeInBytes: fileMetadata?.size,
+                  }
+                  if (appProxy.state.videos.length > 1) {
+                    appProxy.takeSnapshot('batchCompressionStep')
                   }
                 }
               }

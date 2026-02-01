@@ -24,7 +24,15 @@ function CancelCompression() {
         videoId: appSnapShot.state.videos[0].id,
         batchId: appSnapShot.state.batchId,
       })
-      appProxy.timeTravel('beforeCompressionStarted')
+      if (appProxy.state.videos.length > 1) {
+        appProxy.timeTravel('batchCompressionStep')
+        appProxy.state.isProcessCompleted = true
+        appProxy.state.isCompressing = false
+        appProxy.state.totalProgress = 100
+        appProxy.state.isBatchCompressionCancelled = true
+      } else {
+        appProxy.timeTravel('beforeCompressionStarted')
+      }
     } catch {
       toast.error('Cannot cancel compression at this point.')
     }
@@ -34,7 +42,6 @@ function CancelCompression() {
   return isCompressing ? (
     <Button
       color="danger"
-      size="lg"
       variant={confirmCancellation ? 'solid' : 'flat'}
       onPress={() => {
         if (!confirmCancellation) {
