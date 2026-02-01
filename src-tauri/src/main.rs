@@ -2,7 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use lib::fs::{self as file_system};
-use tauri::Manager;
+use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_fs::FsExt;
 use tauri_plugin_log::{Target as LogTarget, TargetKind as LogTargetKind};
 
 use lib::tauri_commands::{
@@ -22,6 +23,7 @@ use lib::tauri_commands::{
 
 #[cfg(target_os = "linux")]
 use lib::tauri_commands::file_manager::DbusState;
+use std::path::PathBuf;
 #[cfg(target_os = "linux")]
 use std::sync::Mutex;
 
@@ -30,6 +32,28 @@ const LOG_TARGETS: [LogTarget; 1] = [LogTarget::new(LogTargetKind::Stdout)];
 
 #[cfg(not(debug_assertions))]
 const LOG_TARGETS: [LogTarget; 0] = [];
+
+fn handle_open_with_app(app: AppHandle, files: Vec<PathBuf>) {
+    let fs_scope = app.fs_scope();
+    for file in &files {
+        let _ = fs_scope.allow_file(file);
+    }
+
+    let files = files
+        .into_iter()
+        .map(|f| f.to_string_lossy().replace('\\', "\\\\"))
+        .collect::<Vec<_>>();
+
+    println!("files {:?}", files);
+
+    let app_handle = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        if let Err(e) = app_handle.emit("open-with-app", files) {
+            eprintln!("Failed to emit open-with-app event: {}", e);
+        }
+    });
+}
 
 #[tokio::main]
 async fn main() {
@@ -52,6 +76,24 @@ async fn main() {
 
             file_system::setup_app_data_dir(app)?;
 
+            #[cfg(any(windows, target_os = "linux"))]
+            {
+                let mut files = Vec::new();
+                for maybe_file in std::env::args().skip(1) {
+                    if maybe_file.starts_with('-') {
+                        continue;
+                    }
+                    if let Ok(url) = url::Url::parse(&maybe_file) {
+                        if let Ok(path) = url.to_file_path() {
+                            files.push(path);
+                        }
+                    } else {
+                        files.push(PathBuf::from(maybe_file))
+                    }
+                }
+                handle_open_with_app(app.handle().clone(), files);
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -67,6 +109,20 @@ async fn main() {
             show_item_in_file_manager,
             copy_file_to_clipboard
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(
+            #[allow(unused_variables)]
+            |app, event| {
+                #[cfg(any(target_os = "macos"))]
+                if let tauri::RunEvent::Opened { urls } = event {
+                    let files = urls
+                        .into_iter()
+                        .filter_map(|url| url.to_file_path().ok())
+                        .collect::<Vec<_>>();
+
+                    handle_open_with_app(app.clone(), files);
+                }
+            },
+        );
 }

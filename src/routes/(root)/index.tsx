@@ -15,11 +15,12 @@ import VideoPicker from '@/tauri/components/VideoPicker'
 import { extensions } from '@/types/compression'
 import { formatBytes } from '@/utils/fs'
 import { convertDurationToMilliseconds } from '@/utils/string'
-import { Video } from '../../types/app'
 import { appProxy, videoConfigInitialState } from './-state'
 import DragAndDrop from './ui/DragAndDrop'
+import OpenWithApp from './ui/OpenWithApp'
 import Setting from './ui/settings/Setting'
 import VideoConfig from './ui/VideoConfig'
+import { Video } from '../../types/app'
 
 export const Route = createFileRoute('/(root)/')({
   component: Root,
@@ -184,6 +185,7 @@ function Root() {
         disable={videos.length > 0}
         onFile={handleVideoSelected}
       />
+      <OpenWithApp onFiles={handleVideoSelected} />
       <Setting />
     </Layout>
   )
