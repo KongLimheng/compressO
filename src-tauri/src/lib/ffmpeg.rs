@@ -193,46 +193,32 @@ impl FFMPEG {
         let mut metadata_args: Vec<String> = Vec::new();
         if let Some(metadata) = metadata_config {
             if let Some(ref title) = metadata.title {
-                if title.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("title={}", title));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("title={}", title.trim()));
             }
             if let Some(ref artist) = metadata.artist {
-                if artist.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("artist={}", artist));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("artist={}", artist.trim()));
             }
             if let Some(ref album) = metadata.album {
-                if album.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("album={}", album));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("album={}", album.trim()));
             }
             if let Some(ref year) = metadata.year {
-                if year.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("date={}", year));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("date={}", year.trim()));
             }
             if let Some(ref comment) = metadata.comment {
-                if comment.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("comment={}", comment));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("comment={}", comment.trim()));
             }
             if let Some(ref genre) = metadata.genre {
-                if genre.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("genre={}", genre));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("genre={}", genre.trim()));
             }
             if let Some(ref creation_time) = metadata.creation_time {
-                if creation_time.len() > 0 {
-                    metadata_args.push("-metadata".to_string());
-                    metadata_args.push(format!("creation_time={}", creation_time));
-                }
+                metadata_args.push("-metadata".to_string());
+                metadata_args.push(format!("creation_time={}", creation_time.trim()));
             }
         }
 

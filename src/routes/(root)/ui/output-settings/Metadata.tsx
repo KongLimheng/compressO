@@ -146,10 +146,10 @@ function Metadata({ videoIndex }: MetadataProps) {
             <motion.div {...slideDownTransition} className="space-y-4 mt-2">
               <div className="text-zinc-700 dark:text-zinc-400">
                 <p className="text-xs  italic">
-                  - Leave a field empty to keep original
+                  - Leave the field empty to keep the original
                 </p>{' '}
                 <p className="text-xs  italic">
-                  - Or, add a whitespace to remove original
+                  - Or, add a whitespace to remove the original
                 </p>
               </div>
               <div>

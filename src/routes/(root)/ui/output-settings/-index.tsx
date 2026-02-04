@@ -115,9 +115,18 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
             ? ((v.config.transformVideoConfig?.transformsHistory ??
                 []) as VideoTransformsHistory[])
             : null,
-          metadataConfig: !v.config?.shouldPreserveMetadata
-            ? ((v.config?.metadataConfig as VideoMetadataConfig) ?? null)
-            : null,
+          metadataConfig:
+            !v.config?.shouldPreserveMetadata && v.config?.metadataConfig
+              ? Object.entries(
+                  v.config?.metadataConfig as VideoMetadataConfig,
+                ).reduce(
+                  (a, [key, value]: [string, any]) => {
+                    a[key] = value?.length > 0 ? value : null
+                    return a
+                  },
+                  {} as Record<string, string>,
+                )
+              : null,
           customThumbnailPath:
             v.config?.shouldEnableCustomThumbnail &&
             v.config?.customThumbnailPath?.length
