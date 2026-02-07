@@ -54,7 +54,7 @@ function TransformVideo({ videoIndex }: TransformVideoProps) {
       {shouldTransformVideo && !isVideoTransformEditMode ? (
         <Button
           size="sm"
-          onPress={(evt) => {
+          onPress={() => {
             appProxy.state.videos[videoIndex].config.isVideoTransformEditMode =
               true
           }}

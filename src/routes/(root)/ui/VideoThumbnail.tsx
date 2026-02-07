@@ -69,6 +69,11 @@ function VideoPreview({ videoIndex }: VideoPreviewProps) {
   const video = videos.length > 0 ? videos[videoIndex] : null
   const { path } = video ?? {}
 
+  // const transforms =
+  //   config?.shouldTransformVideo && config?.transformVideoConfig?.transforms
+  //     ? config.transformVideoConfig.transforms
+  //     : undefined
+
   useEffect(() => {
     let unsubscribe: () => void
     if (appProxy.state.videos[videoIndex]?.config) {
@@ -109,6 +114,7 @@ function VideoPreview({ videoIndex }: VideoPreviewProps) {
       }}
       autoFocus
       className="max-w-[65vw] max-h-[65vh] xxl:max-w-[75vw] mx-auto"
+      // transforms={transforms}
     />
   )
 }

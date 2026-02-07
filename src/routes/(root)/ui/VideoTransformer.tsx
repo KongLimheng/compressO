@@ -266,9 +266,11 @@ function VideoTransformer({ videoIndex }: VideoTransformerProps) {
           <Button
             size="sm"
             color="success"
+            variant="faded"
             onPress={() => {
               handleVideoTransformEditMode(false)
             }}
+            className="h-[unset] py-[5px] text-[10px]"
           >
             Save
           </Button>
