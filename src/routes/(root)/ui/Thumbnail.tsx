@@ -148,7 +148,9 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
                 (video?.dimensions?.height ?? 1),
             }}
             onError={() => {
-              toast.error('Could not load video. Switching to image thumbnail.')
+              toast.error(
+                'Could not load video. Switching to image thumbnail...',
+              )
               appProxy.state.videos[videoIndex].previewMode = 'image'
             }}
             onProgress={({ playedSeconds }: OnProgressProps) => {
@@ -190,33 +192,14 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
               duration={videoDurationMilliseconds / 1000}
               {...(trimConfig
                 ? {
-                    startDuration: trimConfig.startTime,
-                    endDuration: trimConfig.endTime,
+                    initialTrimActions: trimConfig as any,
                   }
                 : {})}
               onActionResizing={(data) => {
-                if (data.row.id === rowIds.videoTrim) {
-                  if (playerRef.current?.playerRef) {
-                    playerRef.current.playerRef.seekTo(
-                      data.dir === 'left' ? data.start : data.end,
-                    )
-                    if (trimConfigSetDebounceRef.current) {
-                      clearTimeout(trimConfigSetDebounceRef.current)
-                    }
-                    trimConfigSetDebounceRef.current = setTimeout(() => {
-                      if (
-                        data.end > data.start &&
-                        appProxy.state.videos[videoIndex]?.config
-                      ) {
-                        const videoConfig =
-                          appProxy.state.videos[videoIndex].config
-                        videoConfig.trimConfig = {
-                          startTime: data.start,
-                          endTime: data.end,
-                        }
-                      }
-                    }, 250)
-                  }
+                if (playerRef.current?.playerRef) {
+                  playerRef.current.playerRef.seekTo(
+                    data.dir === 'left' ? data.start : data.end,
+                  )
                 }
               }}
               onCursorDrag={seekPlayerTo}
@@ -227,6 +210,18 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
               onClickActionOnly={(_, { time }) => {
                 seekPlayerTo(time, false)
                 setTime(time)
+              }}
+              onChange={(data) => {
+                if (trimConfigSetDebounceRef.current) {
+                  clearTimeout(trimConfigSetDebounceRef.current)
+                }
+                trimConfigSetDebounceRef.current = setTimeout(() => {
+                  const trimRow = data.find((d) => d.id === rowIds.videoTrim)
+                  if (trimRow && appProxy.state.videos[videoIndex]?.config) {
+                    appProxy.state.videos[videoIndex].config.trimConfig =
+                      trimRow.actions
+                  }
+                }, 250)
               }}
             />
           </div>

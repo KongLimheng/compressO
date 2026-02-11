@@ -1,4 +1,5 @@
 import { DateValue } from '@internationalized/date'
+import { TimelineAction } from '@xzdarcy/timeline-engine'
 
 import {
   compressionPresets,
@@ -38,10 +39,7 @@ export type VideoConfig = {
   }
   isVideoTransformEditMode?: boolean
   shouldTrimVideo?: boolean
-  trimConfig?: {
-    startTime: number
-    endTime: number
-  }
+  trimConfig?: TimelineAction[]
   isVideoTrimEditMode?: boolean
   shouldPreserveMetadata?: boolean
   metadataConfig?: VideoMetadataConfig | null

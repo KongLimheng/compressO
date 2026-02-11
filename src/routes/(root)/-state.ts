@@ -27,10 +27,6 @@ export const videoConfigInitialState: VideoConfig = {
   customThumbnailPath: null,
   shouldEnableCustomThumbnail: false,
   shouldTrimVideo: false,
-  trimConfig: {
-    startTime: 0,
-    endTime: 0,
-  },
   isVideoTrimEditMode: false,
 }
 

@@ -140,14 +140,14 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
             v.config?.customThumbnailPath?.length
               ? v.config.customThumbnailPath
               : null,
-          trimStartTime:
-            v.config?.shouldTrimVideo && v.config?.trimConfig
-              ? v.config.trimConfig.startTime
-              : null,
-          trimEndTime:
-            v.config?.shouldTrimVideo && v.config?.trimConfig
-              ? v.config.trimConfig.endTime
-              : null,
+          // trimStartTime:
+          //   v.config?.shouldTrimVideo && v.config?.trimConfig
+          //     ? v.config.trimConfig.startTime
+          //     : null,
+          // trimEndTime:
+          //   v.config?.shouldTrimVideo && v.config?.trimConfig
+          //     ? v.config.trimConfig.endTime
+          //     : null,
         })),
       )
       if (Object.keys(results).length === 0) {

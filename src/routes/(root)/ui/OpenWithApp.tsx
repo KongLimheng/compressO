@@ -5,7 +5,7 @@ type OpenWithAppProps = {
   onFiles: (files: string[]) => void
 }
 
-// Listen for `Open with CompressO` event that trigger when we perform Open with file explorer
+// Listen for `Open with CompressO` event triggered by file explorers
 function OpenWithApp({ onFiles }: OpenWithAppProps) {
   useEffect(() => {
     const unlistenPromise = event.listen<string[]>('open-with-app', (evt) => {

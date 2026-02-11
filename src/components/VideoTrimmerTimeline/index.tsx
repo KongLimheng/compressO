@@ -8,6 +8,7 @@ import {
   TimelineEffect,
   TimelineRow,
 } from '@xzdarcy/timeline-engine'
+import { cloneDeep } from 'lodash'
 import {
   FC,
   ForwardedRef,
@@ -36,15 +37,52 @@ const effects = {
 const generateActionId = () =>
   `trim_action_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
 
+/**
+ * Updates the minStart and maxEnd constraints for all trim actions to prevent overlaps while allowing movement within available left/right space
+ */
+const updateActionConstraints = (
+  actions: TimelineAction[],
+  videoDuration: number,
+): TimelineAction[] => {
+  const sortedActions = [...actions].sort((a, b) => a.start - b.start)
+
+  return sortedActions.map((action, index) => {
+    const leftNeighbor = index > 0 ? sortedActions[index - 1] : null
+    const rightNeighbor =
+      index < sortedActions.length - 1 ? sortedActions[index + 1] : null
+
+    const minStart = leftNeighbor ? leftNeighbor.end : 0
+    const maxEnd = rightNeighbor ? rightNeighbor.start : videoDuration
+
+    return {
+      ...action,
+      minStart,
+      maxEnd,
+    }
+  })
+}
+
 const getDefaultEditorData = ({
   duration,
-  startDuration,
-  endDuration,
+  trimActions,
 }: {
   duration: number
-  startDuration?: number
-  endDuration?: number
+  trimActions?: TimelineAction[]
 }): TimelineRow[] => {
+  const defaultTrimActions =
+    trimActions && trimActions.length > 0
+      ? cloneDeep(trimActions)
+      : [
+          {
+            id: generateActionId(),
+            start: 0,
+            minStart: 0,
+            end: duration,
+            maxEnd: duration,
+            effectId: effects.effectVideoTrim.id,
+            movable: true,
+          },
+        ]
   return [
     {
       id: rowIds.videoBoundary,
@@ -64,17 +102,7 @@ const getDefaultEditorData = ({
     },
     {
       id: rowIds.videoTrim,
-      actions: [
-        {
-          id: generateActionId(),
-          start: startDuration ?? 0,
-          minStart: 0,
-          end: endDuration ?? duration,
-          maxEnd: duration,
-          effectId: effects.effectVideoTrim.id,
-          movable: true,
-        },
-      ],
+      actions: defaultTrimActions,
     },
   ]
 }
@@ -150,8 +178,8 @@ export interface VideoTrimmerTimelineProps
   extends Omit<TimelineEditor, 'editorData' | 'effects'> {
   id: string
   duration: number
-  startDuration?: number
-  endDuration?: number
+  initialTrimActions?: TimelineAction[]
+  onChange?: (data: TimelineRow[]) => void
 }
 
 export interface VideoTrimmerTimelineRef extends TimelineState {}
@@ -161,23 +189,43 @@ const VideoTrimmerTimeline = forwardRef(
     {
       id,
       duration,
-      startDuration,
-      endDuration,
+      initialTrimActions,
       style,
+      onChange,
       ...props
     }: VideoTrimmerTimelineProps,
     forwardedRef: ForwardedRef<VideoTrimmerTimelineRef>,
   ) => {
     const [editorData, setEditorData] = useState<TimelineRow[]>(() =>
-      getDefaultEditorData({ duration, startDuration, endDuration }),
+      getDefaultEditorData({ duration, trimActions: initialTrimActions }),
     )
     const [selectedActionId, setSelectedActionId] = useState<string | null>(
       null,
     )
 
+    const updateEditorDataWithConstraints = useCallback(
+      (newData: TimelineRow[] | ((prev: TimelineRow[]) => TimelineRow[])) => {
+        setEditorData((prevData) => {
+          const updatedData =
+            typeof newData === 'function' ? newData(prevData) : newData
+
+          return updatedData.map((row) => {
+            if (row.id === rowIds.videoTrim) {
+              return {
+                ...row,
+                actions: updateActionConstraints(row.actions, duration),
+              }
+            }
+            return row
+          })
+        })
+      },
+      [duration],
+    )
+
     const handleSplitAction = useCallback(
       (actionId: string, splitTime: number) => {
-        setEditorData((prevData) =>
+        updateEditorDataWithConstraints((prevData) =>
           prevData.map((row) => {
             if (row.id === rowIds.videoTrim) {
               const actionToSplit = row.actions.find((a) => a.id === actionId)
@@ -195,13 +243,11 @@ const VideoTrimmerTimeline = forwardRef(
                 ...actionToSplit,
                 id: generateActionId(),
                 end: splitTime,
-                maxEnd: splitTime,
               }
               const rightAction: TimelineAction = {
                 ...actionToSplit,
                 id: generateActionId(),
                 start: splitTime,
-                minStart: splitTime,
               }
 
               const newActions = row.actions.flatMap((action) =>
@@ -216,7 +262,7 @@ const VideoTrimmerTimeline = forwardRef(
           }),
         )
       },
-      [],
+      [updateEditorDataWithConstraints],
     )
 
     const handleDeleteAction = useCallback(
@@ -230,7 +276,7 @@ const VideoTrimmerTimeline = forwardRef(
           return
         }
 
-        setEditorData((prevData) =>
+        updateEditorDataWithConstraints((prevData) =>
           prevData.map((row) => {
             if (row.id === rowIds.videoTrim) {
               if (row.actions.length > 1) {
@@ -247,7 +293,7 @@ const VideoTrimmerTimeline = forwardRef(
           }),
         )
       },
-      [editorData],
+      [editorData, updateEditorDataWithConstraints],
     )
 
     useEffect(() => {
@@ -273,7 +319,6 @@ const VideoTrimmerTimeline = forwardRef(
           ref={forwardedRef}
           editorData={editorData}
           effects={effects}
-          onChange={setEditorData}
           autoScroll
           scaleWidth={scales.scaleWidth}
           scale={scales.scale}
@@ -300,6 +345,10 @@ const VideoTrimmerTimeline = forwardRef(
             }
           }}
           {...props}
+          onChange={(data) => {
+            updateEditorDataWithConstraints(data)
+            onChange?.(data)
+          }}
         />
       </div>
     )

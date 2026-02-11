@@ -2,7 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use lib::fs::{self as file_system};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Emitter, Manager, Runtime, Url};
 use tauri_plugin_fs::FsExt;
 use tauri_plugin_log::{Target as LogTarget, TargetKind as LogTargetKind};
 
@@ -33,24 +34,48 @@ const LOG_TARGETS: [LogTarget; 1] = [LogTarget::new(LogTargetKind::Stdout)];
 #[cfg(not(debug_assertions))]
 const LOG_TARGETS: [LogTarget; 0] = [];
 
-fn handle_open_with_app(app: AppHandle, files: Vec<PathBuf>) {
-    let fs_scope = app.fs_scope();
-    for file in &files {
-        let _ = fs_scope.allow_file(file);
+struct PendingFiles(Arc<Mutex<Vec<String>>>);
+
+impl PendingFiles {
+    fn new() -> Self {
+        Self(Arc::new(Mutex::new(Vec::new())))
+    }
+}
+
+fn handle_open_with_app(app_handle: &tauri::AppHandle, urls: Vec<Url>) {
+    let fs_scope = app_handle.fs_scope();
+    let asset_scope = app_handle.asset_protocol_scope();
+
+    let new_files: Vec<String> = urls
+        .iter()
+        .filter_map(|url| url.to_file_path().ok())
+        .map(|p| p.to_string_lossy().replace('\\', "\\\\"))
+        .collect();
+
+    for url in &urls {
+        if let Ok(path) = url.to_file_path() {
+            let _ = fs_scope.allow_file(&path);
+            let _ = asset_scope.allow_file(&path);
+        }
     }
 
-    let files = files
-        .into_iter()
-        .map(|f| f.to_string_lossy().replace('\\', "\\\\"))
-        .collect::<Vec<_>>();
+    let pending = app_handle.state::<PendingFiles>();
+    let pending_inner = pending.0.clone();
 
-    println!("files {:?}", files);
+    {
+        let mut list = pending_inner.lock().unwrap();
+        list.extend(new_files);
+    }
 
-    let app_handle = app.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(250));
-        if let Err(e) = app_handle.emit("open-with-app", files) {
-            eprintln!("Failed to emit open-with-app event: {}", e);
+    let app_handle_clone = app_handle.clone();
+    tokio::spawn(async move {
+        tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
+
+        let mut list = pending_inner.lock().unwrap();
+        if !list.is_empty() {
+            let files_to_emit = list.drain(..).collect::<Vec<_>>();
+            drop(list);
+            let _ = app_handle_clone.emit("open-with-app", files_to_emit);
         }
     });
 }
@@ -69,6 +94,8 @@ async fn main() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .setup(|app| {
+            app.manage(PendingFiles::new());
+
             #[cfg(target_os = "linux")]
             app.manage(DbusState(Mutex::new(
                 dbus::blocking::SyncConnection::new_session().ok(),
@@ -113,15 +140,10 @@ async fn main() {
         .expect("error while running tauri application")
         .run(
             #[allow(unused_variables)]
-            |app, event| {
+            |app_handle, event| {
                 #[cfg(any(target_os = "macos"))]
                 if let tauri::RunEvent::Opened { urls } = event {
-                    let files = urls
-                        .into_iter()
-                        .filter_map(|url| url.to_file_path().ok())
-                        .collect::<Vec<_>>();
-
-                    handle_open_with_app(app.clone(), files);
+                    handle_open_with_app(app_handle, urls);
                 }
             },
         );

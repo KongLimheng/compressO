@@ -10,7 +10,7 @@ import { CircularProgress } from '@/components/Progress'
 import { zoomInTransition } from '@/utils/animation'
 import { cn } from '@/utils/tailwind'
 import styles from './styles.module.css'
-import VideoThumbnail from './VideoThumbnail'
+import Thumbnail from './Thumbnail'
 import { appProxy } from '../-state'
 
 type PreviewSingleVideoProps = {
@@ -77,7 +77,7 @@ function PreviewSingleVideo({ videoIndex }: PreviewSingleVideoProps) {
         </Code>
       ) : null}
 
-      {video ? <VideoThumbnail videoIndex={videoIndex} /> : null}
+      {video ? <Thumbnail videoIndex={videoIndex} /> : null}
 
       {!(isVideoTransformEditMode || isVideoTrimEditMode) ? (
         isProcessCompleted ? (
