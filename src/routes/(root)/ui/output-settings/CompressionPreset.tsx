@@ -68,7 +68,7 @@ function CompressionPreset({ videoIndex }: CompressionPresetProps) {
 
   return (
     <>
-      <div className="flex items-center mb-4 my-2">
+      <div className="flex items-center mb-4">
         <Switch
           isSelected={!shouldDisableCompression}
           onValueChange={handleSwitchToggle}

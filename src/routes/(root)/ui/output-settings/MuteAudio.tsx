@@ -40,7 +40,7 @@ function MuteAudio({ videoIndex }: MuteAudioProps) {
     videos.length === 0 || isCompressing || isProcessCompleted || isLoadingFiles
 
   return (
-    <div className="flex items-center my-2">
+    <div className="flex items-center">
       <Switch
         isSelected={shouldMuteVideo}
         onValueChange={handleSwitchToggle}

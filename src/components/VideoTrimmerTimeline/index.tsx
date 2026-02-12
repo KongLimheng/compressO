@@ -138,11 +138,6 @@ export const TrimRow: FC<{
     }
   }
 
-  // <div className="flex flex-col items-center justify-center">
-  //       <p>Click to select</p>
-  //       <p>Double click to split</p>
-  //     </div>
-
   return (
     <div
       className={`flex justify-center items-center h-8 rounded-lg cursor-pointer group relative bg-primary`}
@@ -185,6 +180,8 @@ export interface VideoTrimmerTimelineProps
 
 export interface VideoTrimmerTimelineRef extends TimelineState {}
 
+const TRIM_INSTRUCTIONS_HIDDEN_KEY = 'video-trimmer-instructions-hidden'
+
 const VideoTrimmerTimeline = forwardRef(
   (
     {
@@ -204,6 +201,12 @@ const VideoTrimmerTimeline = forwardRef(
     const [selectedActionId, setSelectedActionId] = useState<string | null>(
       null,
     )
+    const [areInstructionsHidden, setAreInstructionsHidden] = useState(() => {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem(TRIM_INSTRUCTIONS_HIDDEN_KEY) === 'true'
+      }
+      return false
+    })
 
     const updateEditorDataWithConstraints = useCallback(
       (newData: TimelineRow[] | ((prev: TimelineRow[]) => TimelineRow[])) => {
@@ -356,17 +359,46 @@ const VideoTrimmerTimeline = forwardRef(
             onChange?.(data)
           }}
         />
-        <div className="w-fit mx-auto">
-          <Popover showArrow backdrop="blur" offset={10} placement="bottom">
-            <PopoverTrigger>
-              <Button size="sm">
-                Instructions
-                <Icon name="info" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>Hello</PopoverContent>
-          </Popover>
-        </div>
+        {!areInstructionsHidden ? (
+          <div className="w-fit mx-auto">
+            <Popover showArrow backdrop="opaque" offset={10} placement="top">
+              <PopoverTrigger>
+                <Button size="sm">
+                  Instructions
+                  <Icon name="info" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <div className="p-2">
+                  <p className="text-md mb-1">Timeline Controls:</p>
+                  <p className="text-xs">- Click to select an action</p>
+                  <p className="text-xs">
+                    - Double click on the action to split
+                  </p>
+                  <p className="text-xs">
+                    - Double click on a free area to add new action
+                  </p>
+                  <p className="text-xs">
+                    - Select and press "Delete" to delete an action
+                  </p>
+                  <Button
+                    size="sm"
+                    fullWidth
+                    variant="flat"
+                    color="danger"
+                    className="mt-2"
+                    onClick={() => {
+                      setAreInstructionsHidden(true)
+                      localStorage.setItem(TRIM_INSTRUCTIONS_HIDDEN_KEY, 'true')
+                    }}
+                  >
+                    Hide Instructions
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        ) : null}
       </div>
     )
   },
