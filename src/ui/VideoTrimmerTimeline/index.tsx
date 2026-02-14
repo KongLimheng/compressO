@@ -301,8 +301,6 @@ const VideoTrimmerTimeline = forwardRef(
           return
         }
 
-        const defaultActionDuration = 1.0
-
         const sortedActions = [...row.actions].sort((a, b) => a.start - b.start)
 
         let leftBoundary = 0
@@ -317,7 +315,8 @@ const VideoTrimmerTimeline = forwardRef(
           }
         }
 
-        // Check if there's at least 1 second of space available
+        const defaultActionDuration = 0.3
+
         const availableSpace = rightBoundary - leftBoundary
         if (availableSpace < defaultActionDuration) {
           return

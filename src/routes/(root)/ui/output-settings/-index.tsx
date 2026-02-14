@@ -281,7 +281,7 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
               className="text-primary"
               isDisabled={isLoadingFiles}
             >
-              Compress <Icon name="logo" size={25} />
+              Process <Icon name="logo" size={25} />
             </Button>
           )}
         </div>

@@ -60,9 +60,10 @@ pub async fn compress_video(
 pub async fn generate_video_thumbnail(
     app: tauri::AppHandle,
     video_path: &str,
+    timestamp: Option<&str>,
 ) -> Result<VideoThumbnail, String> {
     let mut ffmpeg = ffmpeg::FFMPEG::new(&app)?;
-    ffmpeg.generate_video_thumbnail(video_path).await
+    ffmpeg.generate_video_thumbnail(video_path, timestamp).await
 }
 
 #[tauri::command]

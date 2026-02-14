@@ -20,8 +20,9 @@ export function compressVideos(
 
 export function generateVideoThumbnail(
   videoPath: string,
+  timestamp?: string,
 ): Promise<VideoThumbnail> {
-  return core.invoke('generate_video_thumbnail', { videoPath })
+  return core.invoke('generate_video_thumbnail', { videoPath, timestamp })
 }
 
 export function getFileMetadata(filePath: string): Promise<FileMetadata> {

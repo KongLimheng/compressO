@@ -1,13 +1,16 @@
 import { core } from '@tauri-apps/api'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { OnProgressProps } from 'react-player/base'
 import { toast } from 'sonner'
 import { useSnapshot } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
+import Button from '@/components/Button'
+import Icon from '@/components/Icon'
 import Image from '@/components/Image'
 import useTimelineEngine from '@/components/Timeline/useTimelineEngine'
 import VideoPlayer, { VideoPlayerRef } from '@/components/VideoPlayer'
+import { generateVideoThumbnail } from '@/tauri/commands/ffmpeg'
 import VideoTrimmerTimeline, {
   rowIds,
   scales,
@@ -16,6 +19,17 @@ import VideoTrimmerTimeline, {
 import { formatDuration } from '@/utils/string'
 import VideoTransformer from './VideoTransformer'
 import { appProxy } from '../-state'
+
+function pickRandomTimestamp(durationMs: number): string {
+  const durationSeconds = durationMs / 1000
+  // Avoid the first 5% and last 5% of the video to get more interesting frames
+  const minSeconds = durationSeconds * 0.05
+  const maxSeconds = durationSeconds * 0.95
+
+  const randomSeconds = minSeconds + Math.random() * (maxSeconds - minSeconds)
+
+  return formatDuration(randomSeconds)
+}
 
 type VideoThumbnailProps = {
   videoIndex: number
@@ -31,6 +45,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
   const {
     config,
     path: videoPath,
+    pathRaw: videoPathRaw,
     thumbnailPath,
     isProcessCompleted,
     previewMode = 'video',
@@ -48,6 +63,42 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
   const playerRef = useRef<VideoPlayerRef | null>(null)
   const trimmerRef = useRef<VideoTrimmerTimelineRef | null>(null)
   const trimConfigSetDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const [isThumbnailRegenerating, setIsThumbnailRegenerating] = useState(false)
+
+  const handleRegenerateThumbnail = useCallback(
+    async (timeStamp?: string, retries = 2, forced = false) => {
+      if (
+        !videoPathRaw ||
+        !videoDurationMilliseconds ||
+        (forced ? false : isThumbnailRegenerating)
+      )
+        return
+
+      setIsThumbnailRegenerating(true)
+      try {
+        const result = await generateVideoThumbnail(
+          videoPathRaw,
+          timeStamp ?? pickRandomTimestamp(videoDurationMilliseconds),
+        )
+        appProxy.state.videos[videoIndex].thumbnailPathRaw = result.filePath
+        appProxy.state.videos[videoIndex].thumbnailPath = core.convertFileSrc(
+          result.filePath,
+        )
+      } catch {
+        if (retries > 0) {
+          handleRegenerateThumbnail('00:00:01.00', retries - 1)
+        }
+      } finally {
+        setIsThumbnailRegenerating(false)
+      }
+    },
+    [
+      videoPathRaw,
+      videoDurationMilliseconds,
+      videoIndex,
+      isThumbnailRegenerating,
+    ],
+  )
 
   const seekPlayerTo = useCallback((time: number, onPausedOnly = true) => {
     if (playerRef.current?.playerRef) {
@@ -195,7 +246,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
                 (video?.dimensions?.height ?? 1),
             }}
             onError={() => {
-              toast.error(
+              toast.warning(
                 'Could not load video. Switching to image thumbnail...',
               )
               appProxy.state.videos[videoIndex].previewMode = 'image'
@@ -225,11 +276,32 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
             }}
           />
         ) : (
-          <Image
-            alt="video to compress"
-            src={thumbnailPath as string}
-            className="w-full h-full object-contain rounded-3xl max-h-[65vh]"
-          />
+          <div className="relative w-fit mx-auto">
+            <Image
+              alt="video to compress"
+              src={thumbnailPath as string}
+              className="object-contain rounded-3xl max-h-[65vh] border-1 border-primary"
+              onError={() => {
+                if (!isProcessCompleted) {
+                  handleRegenerateThumbnail('00:00:01.00', 0, true)
+                }
+              }}
+            />
+            {videoDurationMilliseconds && !isProcessCompleted ? (
+              <Button
+                size="sm"
+                onPress={() => {
+                  handleRegenerateThumbnail()
+                }}
+                isDisabled={isThumbnailRegenerating}
+                isLoading={isThumbnailRegenerating}
+                className="absolute bottom-4 right-4 z-[10] !p-0 !min-h-0 text-[10px] !h-[unset] !px-2 !py-1"
+              >
+                Regenerate Thumbnail
+                <Icon name="image" size={20} />
+              </Button>
+            ) : null}
+          </div>
         )}
         {showTrimmerLayout && videoDurationMilliseconds ? (
           <div className="mt-4">

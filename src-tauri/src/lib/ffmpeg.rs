@@ -679,6 +679,7 @@ impl FFMPEG {
     pub async fn generate_video_thumbnail(
         &mut self,
         video_path: &str,
+        timestamp: Option<&str>,
     ) -> Result<VideoThumbnail, String> {
         if !Path::exists(Path::new(video_path)) {
             return Err(String::from("File does not exist in given path."));
@@ -689,13 +690,17 @@ impl FFMPEG {
             .iter()
             .collect();
 
+        let timestamp_value = timestamp.unwrap_or("00:00:01.00");
+
         let command = self.ffmpeg.args([
+            "-ss",
+            timestamp_value,
             "-i",
             video_path,
-            "-ss",
-            "00:00:01.00",
-            "-vframes",
+            "-frames:v",
             "1",
+            "-an",
+            "-sn",
             &output_path.display().to_string(),
             "-y",
         ]);

@@ -264,7 +264,7 @@ function PreviewBatchVideos() {
                               track: 'dark:stroke-white/50',
                               value: 'font-bold text-sm text-white1',
                             }}
-                            aria-label="Compressing"
+                            aria-label="Processing"
                           />
                           <div className="absolute inset-0 bg-black/70 z-10 rounded-lg"></div>
                         </>

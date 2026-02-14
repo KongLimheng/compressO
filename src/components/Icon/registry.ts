@@ -11,6 +11,7 @@ import FileExplorer from '@/assets/icons/file-explorer.svg?react'
 import FlipHorizontal from '@/assets/icons/flip-horizontal.svg?react'
 import FlipVertical from '@/assets/icons/flip-vertical.svg?react'
 import Github from '@/assets/icons/github.svg?react'
+import Image from '@/assets/icons/image.svg?react'
 import Info from '@/assets/icons/info.svg?react'
 import Logo from '@/assets/icons/logo.svg?react'
 import LowResHeart from '@/assets/icons/low-res-heart.svg?react'
@@ -70,6 +71,7 @@ const registry = asRegistry({
   pencil: Pencil,
   back: Back,
   pause: Pause,
+  image: Image,
 })
 
 export default registry
