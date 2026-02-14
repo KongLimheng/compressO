@@ -156,7 +156,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       setTime: setTimelineTime,
     } = useTimelineEngine({
       timelineState: timelinePlayerRef,
-      totalDuration: (duration ?? 0) / 1000,
+      totalDuration: duration ?? 0,
     })
 
     useEffect(() => {

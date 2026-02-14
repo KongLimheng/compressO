@@ -8,6 +8,7 @@ import Icon from '@/components/Icon'
 import Image from '@/components/Image'
 import { CircularProgress } from '@/components/Progress'
 import { zoomInTransition } from '@/utils/animation'
+import { formatDuration } from '@/utils/string'
 import { cn } from '@/utils/tailwind'
 import styles from './styles.module.css'
 import Thumbnail from './Thumbnail'
@@ -28,7 +29,7 @@ function PreviewSingleVideo({ videoIndex }: PreviewSingleVideoProps) {
     config,
     size: videoSize,
     sizeInBytes,
-    videDurationRaw,
+    videoDuration,
     dimensions,
     fps,
     extension: videoExtension,
@@ -116,16 +117,18 @@ function PreviewSingleVideo({ videoIndex }: PreviewSingleVideoProps) {
               <Divider orientation="vertical" className="h-10" />
             </>
 
-            <>
-              <div>
-                <p className="italic text-gray-600 dark:text-gray-400">
-                  Duration
-                </p>
-                <span className="block font-black">
-                  {videDurationRaw ?? '-'}
-                </span>
-              </div>
-            </>
+            {videoDuration ? (
+              <>
+                <div>
+                  <p className="italic text-gray-600 dark:text-gray-400">
+                    Duration
+                  </p>
+                  <span className="block font-black">
+                    {formatDuration(videoDuration) ?? '-'}
+                  </span>
+                </div>
+              </>
+            ) : null}
             <>
               {dimensions ? (
                 <>
@@ -167,7 +170,7 @@ function PreviewSingleVideo({ videoIndex }: PreviewSingleVideoProps) {
     >
       <div className="relative">
         <CircularProgress
-          {...(videDurationRaw == null
+          {...(videoDuration == null
             ? { isIndeterminate: true }
             : { value: compressionProgress })}
           classNames={{

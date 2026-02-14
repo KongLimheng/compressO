@@ -60,8 +60,7 @@ export type Video = {
   extension?: null | string
   thumbnailPathRaw?: string | null
   thumbnailPath?: string | null
-  videoDurationMilliseconds?: number | null
-  videDurationRaw?: string | null
+  videoDuration?: number | null
   isCompressing?: boolean
   isProcessCompleted?: boolean
   compressedVideo?: {

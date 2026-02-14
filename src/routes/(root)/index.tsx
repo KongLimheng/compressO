@@ -14,7 +14,6 @@ import { generateVideoThumbnail, getVideoInfo } from '@/tauri/commands/ffmpeg'
 import { getFileMetadata } from '@/tauri/commands/fs'
 import { extensions } from '@/types/compression'
 import { formatBytes } from '@/utils/fs'
-import { convertDurationToMilliseconds } from '@/utils/string'
 import { appProxy, videoConfigInitialState } from './-state'
 import Setting from './ui/app-settings/Setting'
 import DragAndDrop from './ui/DragAndDrop'
@@ -97,13 +96,11 @@ function Root() {
                 height: dimensions[1],
               }
             }
-            const duration = videoInfo.duration
-            const durationInMilliseconds =
-              convertDurationToMilliseconds(duration)
-            if (durationInMilliseconds > 0) {
-              videoState.videDurationRaw = duration
-              videoState.videoDurationMilliseconds = durationInMilliseconds
+
+            if (videoInfo.duration) {
+              videoState.videoDuration = videoInfo.duration
             }
+
             if (videoInfo.fps) {
               videoState.fps = Math.ceil(videoInfo.fps)
             }

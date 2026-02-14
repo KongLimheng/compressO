@@ -49,7 +49,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
     thumbnailPath,
     isProcessCompleted,
     previewMode = 'video',
-    videoDurationMilliseconds,
+    videoDuration,
     compressedVideo,
   } = video ?? {}
   const {
@@ -69,7 +69,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
     async (timeStamp?: string, retries = 2, forced = false) => {
       if (
         !videoPathRaw ||
-        !videoDurationMilliseconds ||
+        !videoDuration ||
         (forced ? false : isThumbnailRegenerating)
       )
         return
@@ -78,7 +78,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
       try {
         const result = await generateVideoThumbnail(
           videoPathRaw,
-          timeStamp ?? pickRandomTimestamp(videoDurationMilliseconds),
+          timeStamp ?? pickRandomTimestamp(videoDuration * 1000),
         )
         appProxy.state.videos[videoIndex].thumbnailPathRaw = result.filePath
         appProxy.state.videos[videoIndex].thumbnailPath = core.convertFileSrc(
@@ -92,12 +92,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
         setIsThumbnailRegenerating(false)
       }
     },
-    [
-      videoPathRaw,
-      videoDurationMilliseconds,
-      videoIndex,
-      isThumbnailRegenerating,
-    ],
+    [videoPathRaw, videoDuration, videoIndex, isThumbnailRegenerating],
   )
 
   const seekPlayerTo = useCallback((time: number, onPausedOnly = true) => {
@@ -117,7 +112,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
     refreshTimeline,
   } = useTimelineEngine({
     timelineState: trimmerRef,
-    totalDuration: (videoDurationMilliseconds ?? 0) / 1000,
+    totalDuration: videoDuration ?? 0,
     onPlay: () => {
       playerRef.current?.playVideo?.()
     },
@@ -265,10 +260,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
                 !Number.isNaN(duration) &&
                 !appProxy.state.isProcessCompleted
               ) {
-                appProxy.state.videos[videoIndex].videoDurationMilliseconds =
-                  duration * 1000
-                appProxy.state.videos[videoIndex].videDurationRaw =
-                  formatDuration(duration)
+                appProxy.state.videos[videoIndex].videoDuration = duration
                 refreshTimeline()
               }
             }}
@@ -285,7 +277,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
                 }
               }}
             />
-            {videoDurationMilliseconds && !isProcessCompleted ? (
+            {videoDuration && !isProcessCompleted ? (
               <Button
                 size="sm"
                 onPress={() => {
@@ -301,12 +293,12 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
             ) : null}
           </div>
         )}
-        {showTrimmerLayout && videoDurationMilliseconds ? (
+        {showTrimmerLayout && videoDuration ? (
           <div className="mt-4">
             <VideoTrimmerTimeline
               id="video-trimmer-1"
               ref={trimmerRef}
-              duration={videoDurationMilliseconds / 1000}
+              duration={videoDuration}
               {...(trimConfig
                 ? {
                     initialTrimActions: trimConfig as any,

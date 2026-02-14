@@ -41,28 +41,33 @@ function CompressionProgress() {
 
                   const trimConfig =
                     videos[targetVideoIndex]?.config?.trimConfig ?? []
-                  const lastTrimAction = trimConfig?.[trimConfig.length - 1]
 
-                  const videoDurationMilliseconds =
-                    videos[targetVideoIndex]?.config?.shouldTrimVideo &&
-                    trimConfig &&
-                    lastTrimAction?.end
-                      ? lastTrimAction.end * 1000
-                      : videos[targetVideoIndex].videoDurationMilliseconds
+                  const targetVideoDuration =
+                    videos[targetVideoIndex].videoDuration ?? 0
 
-                  if (!(videoDurationMilliseconds == null)) {
+                  const videoDurationInMilliseconds =
+                    (videos[targetVideoIndex]?.config?.shouldTrimVideo &&
+                    trimConfig
+                      ? (trimConfig.reduce((a, c) => {
+                          a += c.end >= c.start ? c.end - c.start : 0
+                          return a
+                        }, 0) ?? targetVideoDuration)
+                      : targetVideoDuration) * 1000
+
+                  if (!Number.isNaN(videoDurationInMilliseconds)) {
                     const currentDurationInMilliseconds =
-                      convertDurationToMilliseconds(payload?.currentDuration)
+                      convertDurationToMilliseconds(payload?.currentDuration) // current duration is the duration processed on the output not input source
 
                     if (
                       currentDurationInMilliseconds > 0 &&
-                      videoDurationMilliseconds >= currentDurationInMilliseconds
+                      videoDurationInMilliseconds >=
+                        currentDurationInMilliseconds
                     ) {
                       appProxy.state.videos[
                         targetVideoIndex
                       ].compressionProgress =
                         (currentDurationInMilliseconds * 100) /
-                        videoDurationMilliseconds
+                        videoDurationInMilliseconds
                     }
                   }
                 }

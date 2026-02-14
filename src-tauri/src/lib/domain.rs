@@ -68,7 +68,7 @@ pub struct CancelInProgressCompressionPayload {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VideoInfo {
-    pub duration: Option<String>,
+    pub duration: Option<f64>,
     pub dimensions: Option<(u32, u32)>,
     pub fps: Option<f32>,
 }

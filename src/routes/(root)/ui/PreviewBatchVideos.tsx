@@ -14,6 +14,7 @@ import Tooltip from '@/components/Tooltip'
 import { copyFileToClipboard, showItemInFileManager } from '@/tauri/commands/fs'
 import { zoomInStaggerAnimation } from '@/utils/animation'
 import { formatBytes } from '@/utils/fs'
+import { formatDuration } from '@/utils/string'
 import { cn } from '@/utils/tailwind'
 import { appProxy } from '../-state'
 
@@ -336,7 +337,7 @@ function PreviewBatchVideos() {
                                 {video.extension ?? '-'}
                               </span>
                             </div>
-                            {video.videDurationRaw ? (
+                            {video.videoDuration ? (
                               <>
                                 <Divider
                                   orientation="vertical"
@@ -347,7 +348,7 @@ function PreviewBatchVideos() {
                                     Duration
                                   </p>
                                   <span className="block font-black">
-                                    {video.videDurationRaw ?? '-'}
+                                    {formatDuration(video.videoDuration) ?? '-'}
                                   </span>
                                 </div>
                               </>

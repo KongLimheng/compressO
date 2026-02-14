@@ -15,7 +15,7 @@
     "category": "DeveloperTool",
     "copyright": "Code For Real",
     "targets": ["deb", "appimage", "msi", "dmg"],
-    "externalBin": ["./bin/compresso_ffmpeg"],
+    "externalBin": ["./bin/compresso_ffmpeg", "./bin/compresso_ffprobe"],
     "fileAssociations": [
       {
         "ext": ["mp4", "mov", "mkv", "webm", "avi"],

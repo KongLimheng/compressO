@@ -1,9 +1,9 @@
 use crate::domain::{
     BatchCompressionIndividualCompressionResult, BatchCompressionProgress, BatchCompressionResult,
     CancelInProgressCompressionPayload, CompressionResult, CustomEvents, TauriEvents, TrimSegment,
-    VideoCompressionConfig, VideoCompressionProgress, VideoInfo, VideoMetadataConfig,
-    VideoThumbnail,
+    VideoCompressionConfig, VideoCompressionProgress, VideoMetadataConfig, VideoThumbnail,
 };
+use crate::ffprobe::FFPROBE;
 use crate::fs::get_file_metadata;
 use crossbeam_channel::{Receiver, Sender};
 use nanoid::nanoid;
@@ -11,7 +11,7 @@ use regex::Regex;
 use serde_json::Value;
 use shared_child::SharedChild;
 use std::{
-    io::{BufRead, BufReader},
+    io::BufReader,
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{Arc, Mutex},
@@ -74,6 +74,13 @@ impl FFMPEG {
         if !EXTENSIONS.contains(&convert_to_extension) {
             return Err(String::from("Invalid convert to extension."));
         }
+
+        let has_audio_stream = {
+            let mut ffprobe = FFPROBE::new(&self.app)?;
+            ffprobe.has_audio_stream(video_path).await?
+        };
+
+        println!(">> has_audio_stream {}", has_audio_stream);
 
         let video_id_clone1 = video_id.to_owned();
         let video_id_clone2 = video_id.to_owned();
@@ -226,7 +233,7 @@ impl FFMPEG {
         }
 
         // Only process audio if not muted AND trimming is present
-        if !should_mute_video {
+        if !should_mute_video && has_audio_stream {
             if let Some(segments) = trim_segments {
                 if !segments.is_empty() {
                     map_audio = true;
@@ -281,7 +288,7 @@ impl FFMPEG {
         // Map output audio
         if map_audio {
             cmd_args.extend_from_slice(&["-map", "[outa]"]);
-        } else if !should_mute_video {
+        } else if !should_mute_video && has_audio_stream {
             cmd_args.extend_from_slice(&["-map", "0:a?"]);
         }
 
@@ -385,11 +392,11 @@ impl FFMPEG {
                         log::info!("[tauri] window destroyed");
                         match cp.kill() {
                             Ok(_) => {
-                                log::info!("child process killed.");
+                                log::info!("[ffmpeg-sidecar] child process killed.");
                             }
                             Err(err) => {
                                 log::error!(
-                                    "child process could not be killed {}",
+                                    "[ffmpeg-sidecar] child process could not be killed {}",
                                     err.to_string()
                                 );
                             }
@@ -414,11 +421,11 @@ impl FFMPEG {
                                 log::info!("compression requested to cancel.");
                                 match cp_clone4.kill() {
                                     Ok(_) => {
-                                        log::info!("child process killed.");
+                                        log::info!("[ffmpeg-sidecar] child process killed.");
                                     }
                                     Err(err) => {
                                         log::error!(
-                                            "child process could not be killed {}",
+                                            "[ffmpeg-sidecar] child process could not be killed {}",
                                             err.to_string()
                                         );
                                     }
@@ -529,10 +536,13 @@ impl FFMPEG {
                 window.unlisten(cancel_event_id);
                 match cp_clone3.kill() {
                     Ok(_) => {
-                        log::info!("child process killed.");
+                        log::info!("[ffmpeg-sidecar] child process killed.");
                     }
                     Err(err) => {
-                        log::error!("child process could not be killed {}", err.to_string());
+                        log::error!(
+                            "[ffmpeg-sidecar] child process could not be killed {}",
+                            err.to_string()
+                        );
                     }
                 }
 
@@ -721,10 +731,13 @@ impl FFMPEG {
                     TauriEvents::Destroyed.get_str("key").unwrap(),
                     move |_| match cp.kill() {
                         Ok(_) => {
-                            log::info!("child process killed.");
+                            log::info!("[ffmpeg-sidecar] child process killed.");
                         }
                         Err(err) => {
-                            log::error!("child process could not be killed {}", err.to_string());
+                            log::error!(
+                                "[ffmpeg-sidecar] child process could not be killed {}",
+                                err.to_string()
+                            );
                         }
                     },
                 );
@@ -751,10 +764,13 @@ impl FFMPEG {
                 window.unlisten(destroy_event_id);
                 match cp_clone2.kill() {
                     Ok(_) => {
-                        log::info!("child process killed.");
+                        log::info!("[ffmpeg-sidecar] child process killed.");
                     }
                     Err(err) => {
-                        log::error!("child process could not be killed {}", err.to_string());
+                        log::error!(
+                            "[ffmpeg-sidecar] child process could not be killed {}",
+                            err.to_string()
+                        );
                     }
                 }
                 if !message.is_empty() {
@@ -772,120 +788,6 @@ impl FFMPEG {
 
     pub fn get_asset_dir(&self) -> String {
         self.assets_dir.display().to_string()
-    }
-
-    pub async fn get_video_info(&mut self, video_path: &str) -> Result<VideoInfo, String> {
-        if !Path::exists(Path::new(video_path)) {
-            return Err(String::from("File does not exist in given path."));
-        }
-
-        let command = self
-            .ffmpeg
-            .args(["-i", video_path, "-hide_banner"])
-            .stderr(Stdio::piped()); // Capture stderr for metadata parsing
-
-        match SharedChild::spawn(command) {
-            Ok(child) => {
-                let cp = Arc::new(child);
-                let cp_clone1 = cp.clone();
-                let cp_clone2 = cp.clone();
-
-                let window = match self.app.get_webview_window("main") {
-                    Some(window) => window,
-                    None => return Err(String::from("Could not attach to main window")),
-                };
-
-                let destroy_event_id = window.listen(
-                    TauriEvents::Destroyed.get_str("key").unwrap(),
-                    move |_| match cp.kill() {
-                        Ok(_) => log::info!("child process killed."),
-                        Err(err) => log::error!("child process could not be killed {}", err),
-                    },
-                );
-
-                let thread: tokio::task::JoinHandle<(
-                    u8,
-                    Option<String>,
-                    Option<(u32, u32)>,
-                    Option<f32>,
-                )> = tokio::task::spawn(async move {
-                    let mut duration: Option<String> = None;
-                    let mut dimensions: Option<(u32, u32)> = None;
-                    let mut fps: Option<f32> = None;
-
-                    if let Some(stderr) = cp_clone1.take_stderr() {
-                        let reader = BufReader::new(stderr);
-                        let duration_re = Regex::new(r"Duration: (?P<duration>.*?),").unwrap();
-                        let dimension_re =
-                            Regex::new(r"Video:.*?,.*? (?P<width>\d{2,5})x(?P<height>\d{2,5})")
-                                .unwrap();
-                        let fps_re = Regex::new(r"(?P<fps>\d+(\.\d+)?) fps").unwrap();
-
-                        for line_res in reader.lines() {
-                            if let Ok(line) = line_res {
-                                if duration.is_none() {
-                                    if let Some(cap) = duration_re.captures(&line) {
-                                        duration = Some(cap["duration"].to_string());
-                                    }
-                                }
-                                if dimensions.is_none() {
-                                    if let Some(cap) = dimension_re.captures(&line) {
-                                        if let (Ok(w), Ok(h)) = (
-                                            cap["width"].parse::<u32>(),
-                                            cap["height"].parse::<u32>(),
-                                        ) {
-                                            dimensions = Some((w, h));
-                                        }
-                                    }
-                                }
-                                if fps.is_none() {
-                                    if let Some(cap) = fps_re.captures(&line) {
-                                        if let Ok(parsed_fps) = cap["fps"].parse::<f32>() {
-                                            fps = Some(parsed_fps);
-                                        }
-                                    }
-                                }
-                                if duration.is_some() && dimensions.is_some() && fps.is_some() {
-                                    break;
-                                }
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-
-                    if cp_clone1.wait().is_ok() {
-                        (0, duration, dimensions, fps)
-                    } else {
-                        (1, duration, dimensions, fps)
-                    }
-                });
-
-                let result = match thread.await {
-                    Ok((exit_status, duration, dimensions, fps)) => {
-                        if exit_status == 1 {
-                            Err("Video file is corrupted".to_string())
-                        } else {
-                            Ok(VideoInfo {
-                                duration,
-                                dimensions,
-                                fps,
-                            })
-                        }
-                    }
-                    Err(err) => Err(err.to_string()),
-                };
-
-                // Cleanup
-                window.unlisten(destroy_event_id);
-                if let Err(err) = cp_clone2.kill() {
-                    log::error!("child process could not be killed {}", err);
-                }
-
-                result
-            }
-            Err(err) => Err(err.to_string()),
-        }
     }
 
     fn build_ffmpeg_filters(&self, actions: &Vec<Value>) -> String {
