@@ -17,11 +17,11 @@ import {
   VideoTransformsHistory,
 } from '@/types/compression'
 import { formatBytes } from '@/utils/fs'
+import AudioVolume from './AudioVolume'
 import CompressionPreset from './CompressionPreset'
 import CompressionQuality from './CompressionQuality'
 import CustomThumbnail from './CustomThumbnail'
 import Metadata from './Metadata'
-import MuteAudio from './MuteAudio'
 import TransformVideo from './TransformVideo'
 import TrimVideo from './TrimVideo'
 import VideoCodec from './VideoCodec'
@@ -111,7 +111,7 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
           presetName: !v.config?.shouldDisableCompression
             ? v.config.presetName
             : null,
-          shouldMuteVideo: v.config?.shouldMuteVideo ?? false,
+          audioVolume: v.config?.audioVolume ?? 100,
           quality: v.config?.shouldEnableQuality
             ? (v.config?.quality as number)
             : 101,
@@ -264,7 +264,7 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
           ) : null}
           {tab === 'audio' ? (
             <>
-              <MuteAudio videoIndex={videoIndex} />
+              <AudioVolume videoIndex={videoIndex} />
             </>
           ) : null}
           {tab === 'metadata' ? (

@@ -31,7 +31,7 @@ export type VideoConfig = {
   convertToExtension: keyof typeof extensions.video
   presetName: keyof typeof compressionPresets
   shouldDisableCompression: boolean
-  shouldMuteVideo: boolean
+  audioVolume: number
   shouldEnableQuality?: boolean
   quality?: number | null
   shouldEnableCustomDimensions?: boolean

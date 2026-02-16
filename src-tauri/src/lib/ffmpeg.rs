@@ -62,7 +62,7 @@ impl FFMPEG {
         preset_name: Option<&str>,
         video_id: &str,
         batch_id: Option<&str>,
-        should_mute_video: bool,
+        audio_volume: u16,
         quality: u16,
         dimensions: Option<(u32, u32)>,
         fps: Option<&str>,
@@ -80,8 +80,6 @@ impl FFMPEG {
             let mut ffprobe = FFPROBE::new(&self.app)?;
             !ffprobe.get_audio_streams(video_path).await?.is_empty()
         };
-
-        println!(">> has_audio_stream {}", has_audio_stream);
 
         let video_id_clone1 = video_id.to_owned();
         let video_id_clone2 = video_id.to_owned();
@@ -171,7 +169,6 @@ impl FFMPEG {
                 }
             }
         };
-        println!(">> {:?}", output_codec);
         cmd_args.extend_from_slice(&["-c:v:0", output_codec.as_str()]);
 
         // Quality
@@ -209,10 +206,17 @@ impl FFMPEG {
         video_post_chain.push(String::from(padding));
         let video_post_process = video_post_chain.join(",");
 
-        // Build unified filter_complex string
         let mut filter_complex_parts: Vec<String> = Vec::new();
         let mut map_video = false;
         let mut map_audio = false;
+
+        // Prepare volume filter string if needed (to be injected into complex filter)
+        let volume_filter_str = if audio_volume > 0 && audio_volume != 100 {
+            let volume_value = audio_volume as f32 / 100.0;
+            format!(",volume={}", volume_value)
+        } else {
+            "".to_string()
+        };
 
         if let Some(segments) = trim_segments {
             if !segments.is_empty() {
@@ -225,7 +229,7 @@ impl FFMPEG {
                         seg.start, seg.end, video_post_process
                     ));
                 } else {
-                    // Multi trim: trim segments -> concat -> post_process -> [outv]
+                    // Multi trim: trim segments -> concat -> post process -> [outv]
                     let mut video_parts = Vec::new();
                     let mut video_labels = Vec::new();
                     for (i, seg) in segments.iter().enumerate() {
@@ -238,7 +242,6 @@ impl FFMPEG {
                     }
                     filter_complex_parts.push(video_parts.join("; "));
 
-                    // Concat segments, apply post-processing, output to [outv]
                     filter_complex_parts.push(format!(
                         "{} concat=n={}:v=1:a=0,{}[outv]",
                         video_labels.join(""),
@@ -255,16 +258,15 @@ impl FFMPEG {
             map_video = true;
         }
 
-        // Only process audio if not muted AND trimming is present
-        if !should_mute_video && has_audio_stream {
+        if audio_volume > 0 && has_audio_stream {
             if let Some(segments) = trim_segments {
                 if !segments.is_empty() {
                     map_audio = true;
                     if segments.len() == 1 {
                         let seg = &segments[0];
                         filter_complex_parts.push(format!(
-                            "[0:a]atrim={}:{},asetpts=PTS-STARTPTS[outa]",
-                            seg.start, seg.end
+                            "[0:a]atrim={}:{},asetpts=PTS-STARTPTS{}[outa]",
+                            seg.start, seg.end, volume_filter_str
                         ));
                     } else {
                         let mut audio_parts = Vec::new();
@@ -278,10 +280,11 @@ impl FFMPEG {
                             ));
                         }
                         filter_complex_parts.push(format!(
-                            "{}; {} concat=n={}:v=0:a=1[outa]",
+                            "{}; {} concat=n={}:v=0:a=1{}[outa]",
                             audio_parts.join("; "),
                             audio_labels.join(""),
-                            segments.len()
+                            segments.len(),
+                            volume_filter_str
                         ));
                     }
                 }
@@ -311,12 +314,28 @@ impl FFMPEG {
         // Map output audio
         if map_audio {
             cmd_args.extend_from_slice(&["-map", "[outa]"]);
-        } else if !should_mute_video && has_audio_stream {
+        } else if audio_volume > 0 && has_audio_stream {
             cmd_args.extend_from_slice(&["-map", "0:a?"]);
         }
 
-        // Mute Audio (overrides everything if set)
-        if should_mute_video {
+        let volume_args: Vec<String> = {
+            if audio_volume > 0 && audio_volume != 100 && has_audio_stream && !map_audio {
+                let volume_value = audio_volume as f32 / 100.0;
+                vec!["-af".to_string(), format!("volume={}", volume_value)]
+            } else {
+                vec![]
+            }
+        };
+        if !volume_args.is_empty() {
+            cmd_args.extend_from_slice(
+                &(volume_args
+                    .iter()
+                    .map(|v| v.as_str())
+                    .collect::<Vec<&str>>()),
+            );
+        }
+
+        if audio_volume == 0 {
             cmd_args.push("-an");
         }
 
@@ -649,7 +668,7 @@ impl FFMPEG {
             let convert_to_extension = &video_options.convert_to_extension;
             let preset_name = video_options.preset_name.as_deref();
             let batch_id_for_compression = batch_id;
-            let should_mute_video = video_options.should_mute_video;
+            let audio_volume = video_options.audio_volume;
             let quality = video_options.quality;
             let dimensions = video_options.dimensions;
             let fps = video_options.fps.as_deref();
@@ -669,7 +688,7 @@ impl FFMPEG {
                     preset_name,
                     video_id,
                     Some(batch_id_for_compression),
-                    should_mute_video,
+                    audio_volume,
                     quality,
                     dimensions,
                     fps,

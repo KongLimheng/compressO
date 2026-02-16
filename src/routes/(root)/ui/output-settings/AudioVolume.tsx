@@ -1,0 +1,146 @@
+import React, { useCallback } from 'react'
+import { snapshot, useSnapshot } from 'valtio'
+
+import Icon from '@/components/Icon'
+import Slider from '@/components/Slider/Slider'
+import { getAudioStreams } from '@/tauri/commands/ffprobe'
+import { appProxy, normalizeBatchVideosConfig } from '../../-state'
+
+type AudioVolumeProps = {
+  videoIndex: number
+}
+
+function AudioVolume({ videoIndex }: AudioVolumeProps) {
+  const {
+    state: {
+      videos,
+      isCompressing,
+      isProcessCompleted,
+      commonConfigForBatchCompression,
+      isLoadingFiles,
+    },
+  } = useSnapshot(appProxy)
+  const video = videos.length > 0 && videoIndex >= 0 ? videos[videoIndex] : null
+  const { config, pathRaw, videoInfoRaw } = video ?? {}
+  const { audioVolume } = config ?? commonConfigForBatchCompression ?? {}
+
+  const [volume, setVolume] = React.useState<number>(audioVolume ?? 100)
+  const debounceRef = React.useRef<NodeJS.Timeout>()
+  const volumeRef = React.useRef<number>(volume)
+
+  React.useEffect(() => {
+    volumeRef.current = volume
+  }, [volume])
+
+  React.useEffect(() => {
+    const appSnapshot = snapshot(appProxy)
+    if (
+      appSnapshot.state.videos.length &&
+      volume !==
+        (videoIndex >= 0
+          ? appSnapshot.state.videos[videoIndex]?.config?.audioVolume
+          : appSnapshot.state.videos.length > 1
+            ? appSnapshot.state.commonConfigForBatchCompression?.audioVolume
+            : undefined)
+    ) {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+      debounceRef.current = setTimeout(() => {
+        if (videoIndex >= 0 && appProxy.state.videos[videoIndex]?.config) {
+          appProxy.state.videos[videoIndex].config.audioVolume = volume
+          appProxy.state.videos[videoIndex].isConfigDirty = true
+        } else {
+          if (appProxy.state.videos.length > 1) {
+            appProxy.state.commonConfigForBatchCompression.audioVolume = volume
+            normalizeBatchVideosConfig()
+          }
+        }
+      }, 500)
+    }
+    return () => {
+      clearTimeout(debounceRef.current)
+    }
+  }, [volume, videoIndex])
+
+  React.useEffect(() => {
+    if (audioVolume !== volumeRef.current) {
+      if (typeof audioVolume === 'number' && !Number.isNaN(+audioVolume)) {
+        setVolume(audioVolume)
+      }
+    }
+  }, [audioVolume])
+
+  React.useEffect(() => {
+    videoIndex > -1 &&
+      appProxy.state.videos[videoIndex] &&
+      !appProxy.state.videos[videoIndex]?.videoInfoRaw?.audioStreams &&
+      pathRaw &&
+      (async () => {
+        const streams = await getAudioStreams(pathRaw)
+        if (streams) {
+          const targetVideo = appProxy.state.videos[videoIndex]
+          if (!targetVideo?.videoInfoRaw) {
+            appProxy.state.videos[videoIndex].videoInfoRaw = {}
+          }
+          if (targetVideo.videoInfoRaw) {
+            targetVideo.videoInfoRaw.audioStreams = streams
+          }
+        }
+      })()
+  }, [pathRaw, videoIndex])
+
+  const handleVolumeChange = useCallback((value: number | number[]) => {
+    if (typeof value === 'number') {
+      setVolume(value)
+    }
+  }, [])
+
+  const hasNoAudio = videoInfoRaw?.audioStreams?.length === 0
+  const shouldDisableInput =
+    videos.length === 0 ||
+    isCompressing ||
+    isProcessCompleted ||
+    isLoadingFiles ||
+    hasNoAudio
+
+  return (
+    <>
+      <Slider
+        label="Volume:"
+        aria-label="Audio Volume"
+        size="sm"
+        marks={[
+          {
+            value: 0,
+            label: 'Mute',
+          },
+          {
+            value: 50,
+            label: '50%',
+          },
+          {
+            value: 100,
+            label: 'Full',
+          },
+        ]}
+        className="mb-8"
+        classNames={{ mark: 'text-xs' }}
+        getValue={(value) => {
+          const val = Array.isArray(value) ? value?.[0] : +value
+          return `${Math.round(val)}%`
+        }}
+        renderValue={(props) => (
+          <p className="text-primary text-sm font-bold">{props?.children}</p>
+        )}
+        value={volume}
+        onChange={handleVolumeChange}
+        isDisabled={shouldDisableInput}
+        startContent={<Icon name="muteAudio" size={20}></Icon>}
+      />
+      {hasNoAudio ? <p className="text-xs">No audio found</p> : null}
+    </>
+  )
+}
+
+export default AudioVolume

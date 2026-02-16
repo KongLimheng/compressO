@@ -183,7 +183,7 @@ export type VideoCompressionConfig = {
   presetName?: string | null
   videoId: string
   batchId?: string | null
-  shouldMuteVideo: boolean
+  audioVolume: number
   quality: number
   dimensions?: [number, number] | null
   fps?: string | null

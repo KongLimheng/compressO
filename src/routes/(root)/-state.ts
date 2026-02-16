@@ -21,7 +21,7 @@ export const videoConfigInitialState: VideoConfig = {
   convertToExtension: 'mp4',
   presetName: 'ironclad',
   shouldDisableCompression: false,
-  shouldMuteVideo: false,
+  audioVolume: 100,
   quality: 50,
   shouldEnableQuality: false,
   shouldPreserveMetadata: true,

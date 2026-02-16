@@ -148,7 +148,7 @@ pub struct VideoCompressionConfig {
     pub video_path: String,
     pub convert_to_extension: String,
     pub preset_name: Option<String>,
-    pub should_mute_video: bool,
+    pub audio_volume: u16,
     pub quality: u16,
     pub dimensions: Option<(u32, u32)>,
     pub fps: Option<String>,

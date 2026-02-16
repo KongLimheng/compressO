@@ -7,6 +7,7 @@ import Card from '@/components/Card'
 import DatePicker from '@/components/DatePicker'
 import Divider from '@/components/Divider'
 import Switch from '@/components/Switch'
+import TextArea from '@/components/TextArea'
 import TextInput from '@/components/TextInput'
 import type { VideoMetadataConfig } from '@/types/app'
 import { slideDownTransition } from '@/utils/animation'
@@ -191,60 +192,6 @@ function Metadata({ videoIndex }: MetadataProps) {
               <div>
                 <TextInput
                   type="text"
-                  label="Year/Date"
-                  placeholder="Enter year or date"
-                  defaultValue={metadataConfig?.year ?? ''}
-                  isDisabled={shouldDisableInput}
-                  classNames={{ mainWrapper: 'my-3' }}
-                  onValueChange={(value) => updateMetadataField('year', value)}
-                />
-                <Divider className="mb-6" />
-              </div>
-              <div>
-                <TextInput
-                  type="text"
-                  label="Description"
-                  placeholder="Enter description"
-                  defaultValue={metadataConfig?.description ?? ''}
-                  isDisabled={shouldDisableInput}
-                  classNames={{ mainWrapper: 'my-3' }}
-                  onValueChange={(value) =>
-                    updateMetadataField('description', value)
-                  }
-                />
-                <Divider className="mb-6" />
-              </div>
-              <div>
-                <TextInput
-                  type="text"
-                  label="Synopsis"
-                  placeholder="Enter synopsis"
-                  defaultValue={metadataConfig?.synopsis ?? ''}
-                  isDisabled={shouldDisableInput}
-                  classNames={{ mainWrapper: 'my-3' }}
-                  onValueChange={(value) =>
-                    updateMetadataField('synopsis', value)
-                  }
-                />
-                <Divider className="mb-6" />
-              </div>
-              <div>
-                <TextInput
-                  type="text"
-                  label="Comment"
-                  placeholder="Enter comment"
-                  defaultValue={metadataConfig?.comment ?? ''}
-                  isDisabled={shouldDisableInput}
-                  classNames={{ mainWrapper: 'my-3' }}
-                  onValueChange={(value) =>
-                    updateMetadataField('comment', value)
-                  }
-                />
-                <Divider className="mb-6" />
-              </div>
-              <div>
-                <TextInput
-                  type="text"
                   label="Genre"
                   placeholder="Enter genre"
                   defaultValue={metadataConfig?.genre ?? ''}
@@ -254,6 +201,61 @@ function Metadata({ videoIndex }: MetadataProps) {
                 />
                 <Divider className="mb-6" />
               </div>
+              <div>
+                <TextInput
+                  type="text"
+                  label="Year/Date"
+                  placeholder="Enter year or date"
+                  defaultValue={metadataConfig?.year ?? ''}
+                  isDisabled={shouldDisableInput}
+                  classNames={{ mainWrapper: 'my-3' }}
+                  onValueChange={(value) => updateMetadataField('year', value)}
+                />
+                <Divider className="mb-6" />
+              </div>
+              <div className="!mt-[-10px]">
+                <TextArea
+                  type="text"
+                  label="Description"
+                  placeholder="Enter description"
+                  defaultValue={metadataConfig?.description ?? ''}
+                  isDisabled={shouldDisableInput}
+                  onValueChange={(value) =>
+                    updateMetadataField('description', value)
+                  }
+                  className="mb-3"
+                />
+                <Divider className="mb-6" />
+              </div>
+              <div className="!mt-[-10px]">
+                <TextArea
+                  type="text"
+                  label="Synopsis"
+                  placeholder="Enter synopsis"
+                  defaultValue={metadataConfig?.synopsis ?? ''}
+                  isDisabled={shouldDisableInput}
+                  onValueChange={(value) =>
+                    updateMetadataField('synopsis', value)
+                  }
+                  className="mb-3"
+                />
+                <Divider className="mb-6" />
+              </div>
+              <div className="!mt-[-10px]">
+                <TextArea
+                  type="text"
+                  label="Comment"
+                  placeholder="Enter comment"
+                  defaultValue={metadataConfig?.comment ?? ''}
+                  isDisabled={shouldDisableInput}
+                  onValueChange={(value) =>
+                    updateMetadataField('comment', value)
+                  }
+                  className="mb-3"
+                />
+                <Divider className="mb-6" />
+              </div>
+
               <div>
                 <div className="flex items-center mt-[-10px]">
                   <Switch
