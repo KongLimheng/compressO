@@ -268,7 +268,7 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
           ))}
         </Tabs>
         <ScrollShadow
-          className="max-h-[70vh] hxl:max-h-[80vh] my-6"
+          className="max-h-[70vh] hxl:max-h-[75vh] my-6"
           hideScrollBar
         >
           {tab === 'video' ? (
