@@ -258,7 +258,7 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
             config={{
               file: {
                 attributes: {
-                  crossorigin: 'anonymous',
+                  crossOrigin: 'anonymous',
                 },
               },
             }}

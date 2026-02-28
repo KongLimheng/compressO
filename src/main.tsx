@@ -22,6 +22,11 @@ if (typeof window !== 'undefined') {
   window.__envMode = __envMode
 }
 
+const storedColor = localStorage.getItem('primaryColor')
+if (storedColor) {
+  document.documentElement.style.setProperty('--color-primary', storedColor)
+}
+
 const rootElement = document.getElementById('app')!
 
 if (!rootElement.innerHTML) {

@@ -350,10 +350,9 @@ function OutputSettings({ videoIndex }: OutputSettingsProps) {
           ) : (
             <Button
               as={motion.button}
-              color="primary"
               onPress={handleCompression}
               fullWidth
-              className="text-primary"
+              className="w-full text-primary bg-primary/20"
               isDisabled={isLoadingFiles}
             >
               Process <Icon name="logo" size={25} />

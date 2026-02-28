@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
 
 import Button from '@/components/Button'
+import ColorPicker from '@/components/ColorPicker'
 import Divider from '@/components/Divider'
 import Dropdown, { DropdownMenu, DropdownTrigger } from '@/components/Dropdown'
 import Icon from '@/components/Icon'
@@ -92,6 +93,11 @@ function AppSetting() {
         <div className="flex justify-between items-center">
           <p className="text-gray-600 dark:text-gray-400 text-sm">Theme</p>
           <ThemeSwitcher />
+        </div>
+        <Divider className="my-2 dark:bg-zinc-700" />
+        <div className="flex justify-between items-center">
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Color</p>
+          <ColorPicker />
         </div>
         <Divider className="my-2 dark:bg-zinc-700" />
         <div className="flex justify-between items-center">

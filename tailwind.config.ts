@@ -43,11 +43,11 @@ const config: Config = {
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
       colors: {
-        primary: '#7f46e2',
-        secondary: '#ff6ae7',
-        black1: '#000000',
-        gray1: '#c2c2c2',
-        white1: '#ffffff',
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
+        black1: 'rgb(var(--color-black1) / <alpha-value>)',
+        gray1: 'rgb(var(--color-gray1) / <alpha-value>)',
+        white1: 'rgb(var(--color-white1) / <alpha-value>)',
       },
       fontFamily: {
         poppins: ['var(--font-poppins)'],
