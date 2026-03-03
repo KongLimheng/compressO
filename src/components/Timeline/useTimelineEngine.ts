@@ -55,23 +55,23 @@ function useTimelineEngine({
 
   const autoScrollCursorToCurrentTime = (
     scales: TimelineScales,
-    options: { realtime?: boolean; disableTransitionAnimation?: boolean } = {
+    options: { realtime?: boolean; smoothScrolling?: boolean } = {
       realtime: false,
-      disableTransitionAnimation: false,
+      smoothScrolling: false,
     },
   ) => {
     if (!timelineState.current) return
 
-    function manageTransitionAnimation() {
-      if (options.disableTransitionAnimation) {
+    function manageSmoothScrolling() {
+      if (options.smoothScrolling) {
         const target = timelineState.current?.target
         if (!target) return
-        target.classList.add('disable-transition-animation')
+        target.classList.add('enable-smooth-scrolling')
         if (disableAnimationTimeoutRef.current) {
           clearTimeout(disableAnimationTimeoutRef.current)
         }
         disableAnimationTimeoutRef.current = setTimeout(() => {
-          target.classList.remove('disable-transition-animation')
+          target.classList.remove('enable-smooth-scrolling')
         }, 250)
       }
     }
@@ -88,7 +88,7 @@ function useTimelineEngine({
         currentTime * (scales.scaleWidth / scales.scale) +
         scales.startLeft -
         width / 2
-      manageTransitionAnimation()
+      manageSmoothScrolling()
       timelineState.current.setScrollLeft(left)
     } else {
       const width = target.clientWidth
@@ -98,7 +98,7 @@ function useTimelineEngine({
       const viewEnd = scrollLeft + width
 
       if (Math.floor(cursorX) % Math.floor(viewEnd) === 0) {
-        manageTransitionAnimation()
+        manageSmoothScrolling()
         timelineState.current.setScrollLeft(cursorX)
       }
     }

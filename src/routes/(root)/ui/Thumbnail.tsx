@@ -235,7 +235,6 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
                   setTimelineTime(currentTime)
                   autoScrollCursorToCurrentTime(scales, {
                     realtime: true,
-                    disableTransitionAnimation: true,
                   })
                 }
               }
@@ -336,11 +335,13 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
             onPlay={() => {
               autoScrollCursorToCurrentTime(scales, {
                 realtime: true,
-                disableTransitionAnimation: true,
               })
             }}
             onArrowKeySeek={() => {
-              autoScrollCursorToCurrentTime(scales, { realtime: true })
+              autoScrollCursorToCurrentTime(scales, {
+                realtime: true,
+                smoothScrolling: true,
+              })
             }}
           />
         ) : (

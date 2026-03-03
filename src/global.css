@@ -151,20 +151,17 @@ body > * {
 .timeline-editor-cursor {
   border-color: theme("colors.white1") !important;
 }
-/* 
-.timeline-editor::-webkit-scrollbar:horizontal {
-  height: 10px !important;
+
+.timeline-editor .ReactVirtualized__Grid,
+.timeline-editor .ReactVirtualized__Grid::before,
+.timeline-editor .ReactVirtualized__Grid::after {
+  scroll-behavior: auto !important;
 }
 
-.timeline-editor::-webkit-scrollbar-thumb:horizontal {
-  background: #555151 !important;
-  border-radius: 5px !important;
-} */
-
-.timeline-editor.disable-transition-animation *,
-.timeline-editor.disable-transition-animation *::before,
-.timeline-editor.disable-transition-animation *::after {
-  scroll-behavior: auto !important;
+.timeline-editor.enable-smooth-scrolling .ReactVirtualized__Grid,
+.timeline-editor.enable-smooth-scrolling .ReactVirtualized__Grid::before,
+.timeline-editor.enable-smooth-scrolling .ReactVirtualized__Grid::after {
+  scroll-behavior: smooth !important;
 }
 
 .timeline-editor-edit-area
@@ -174,8 +171,7 @@ body > * {
 
 .timeline-editor-edit-area
   .ReactVirtualized__Grid::-webkit-scrollbar:horizontal {
-  width: 10px !important;
-  height: 10px !important;
+  height: 8px !important;
 }
 .timeline-editor-edit-area
   .ReactVirtualized__Grid::-webkit-scrollbar-track:horizontal {

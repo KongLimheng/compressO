@@ -164,7 +164,10 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             const currentTime = playerRef.current.getCurrentTime()
             const newTime = Math.min(currentTime + SEEK_DURATION, duration)
             playerRef.current.seekTo(newTime, 'seconds')
-            autoScrollCursorToCurrentTime(scales, { realtime: true })
+            autoScrollCursorToCurrentTime(scales, {
+              realtime: true,
+              smoothScrolling: true,
+            })
             onArrowKeySeek?.('right')
           }
         } else if (e.code === 'ArrowLeft' && !isInputField) {
@@ -173,7 +176,10 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             const currentTime = playerRef.current.getCurrentTime()
             const newTime = Math.max(currentTime - SEEK_DURATION, 0)
             playerRef.current.seekTo(newTime, 'seconds')
-            autoScrollCursorToCurrentTime(scales, { realtime: true })
+            autoScrollCursorToCurrentTime(scales, {
+              realtime: true,
+              smoothScrolling: true,
+            })
             onArrowKeySeek?.('left')
           }
         }
@@ -292,7 +298,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
       if (enableTimelinePlayer && timelinePlayerRef.current) {
         autoScrollCursorToCurrentTime(scales, {
           realtime: true,
-          disableTransitionAnimation: true,
         })
       }
     }, [enableTimelinePlayer])
@@ -348,7 +353,6 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
               onPlay?.()
               autoScrollCursorToCurrentTime(scales, {
                 realtime: true,
-                disableTransitionAnimation: true,
               })
             }}
             onPause={() => {
