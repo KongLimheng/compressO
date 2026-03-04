@@ -171,8 +171,10 @@ function VideoThumbnail({ videoIndex }: VideoThumbnailProps) {
             (playerRef.current || trimmerRef.current) &&
             videoSnapshot.config.isVideoTransformEditMode
           ) {
+            if (playerRef.current) {
+              playerRef.current.pauseVideo()
+            }
             const { pathRaw: videoPathRaw } = videoSnapshot
-
             const currentTime = playerRef.current
               ? playerRef.current.playerRef?.getCurrentTime?.()
               : trimmerRef.current?.getTime?.()
