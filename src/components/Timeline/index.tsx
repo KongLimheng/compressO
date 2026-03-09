@@ -9,7 +9,7 @@ export const BoundaryRowActionRender: FC<{
 }> = ({ action }) => {
   return (
     <div className="flex justify-center items-center bg-primary h-[2px] mt-3 rounded-lg">
-      <p className="text-center text-white1">{`${(
+      <p className="text-[11px] text-center text-zinc-800 dark:text-zinc-300 bg-zinc-200 dark:bg-zinc-800 rounded-lg px-2">{`${(
         action.end - action.start
       ).toFixed(2)}s`}</p>
     </div>

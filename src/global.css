@@ -208,3 +208,7 @@ body > * {
 .timeline-editor-cursor {
   @apply border-black1 dark:border-white1 !important;
 }
+
+.text-shadow {
+  text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.35);
+}
