@@ -39,6 +39,9 @@ export function formatDuration(
   )
 
   const pad = (n: number, size = 2) => n.toString().padStart(size, '0')
-
-  return `${options?.enableHoursWhenZero ? pad(hours) : ''}${options?.enableHoursWhenZero ? ':' : ''}${pad(minutes)}:${pad(seconds)}${!options?.disableMilliseconds ? `.${pad(milliseconds)}` : ''}`
+  const hoursPart =
+    (options?.enableHoursWhenZero && hours === 0) || hours !== 0
+      ? `${pad(hours)}:`
+      : ''
+  return `${hoursPart}${pad(minutes)}:${pad(seconds)}${!options?.disableMilliseconds ? `.${pad(milliseconds)}` : ''}`
 }
